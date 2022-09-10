@@ -11,6 +11,6 @@ ENV VERSION ${version}
 #COPY ./scripts/ /bin
 COPY ./src/main/resources/log4j2.properties /bin/log4j2.properties
 
-ADD target/Consumer22-7-2022-1.0-SNAPSHOT.jar /
+ADD target/heterogenousconsumers-1.0-SNAPSHOT.jar /
 
-CMD ["java","-jar" , "/Consumer22-7-2022-1.0-SNAPSHOT.jar"]
+CMD ["java","-jar" , "/heterogenousconsumers-1.0-SNAPSHOT.jar"]
