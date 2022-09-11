@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: cons1persec
+  name: cons1persec
+spec:
+  serviceName: "cons1persecservice"
+  podManagementPolicy: "Parallel"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cons1persec
+  template:
+    metadata:
+      labels:
+        app: cons1persec
+    spec:
+      containers:
+        - name: cons1persec
+          #image: docker.io/mezzeddine/consumerevents:v0 # demo bin pack
+          #image: docker.io/mezzeddine/consumereventsrange:v0 # demo range
+          #image: docker.io/mezzeddine/consumereventssticky:v0 # demo range
+          #image: docker.io/mezzeddine/consumer22-7-2022:v1 # sticky
+          #image: docker.io/mezzeddine/consumer22-7-2022:v3 # (for 1 intial consumer)
+          #image: docker.io/mezzeddine/consumer5bpcontroller:v4 # (for 1 intial consumer), https://github.com/MazenEzzeddine/Consumer22-7-2022/tree/withinitial5consumers, 386765f
+          #image: docker.io/mezzeddine/consumer5bpcontroller:v5 # (for 5 intial consumer), https://github.com/MazenEzzeddine/Consumer22-7-2022/tree/Refactor1-9-2022, 91235a4
+          #image: docker.io/mezzeddine/consumerstickyenv:v0 # sticky
+          image: docker.io/mezzeddine/consumerstickyenvpass:v12 # sticky
+
+
+          env:
+            - name: BOOTSTRAP_SERVERS
+              value: my-cluster-kafka-bootstrap:9092
+            - name: TOPIC
+              value: week
+            - name: GROUP_ID
+              value: week
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: SLEEP
+              value: "10"
+            - name: POLL
+              value: "95"
+            - name: MESSAGE_COUNT
+              value: "1000000"
+            - name: THENAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+
+            - name: ADDITIONAL_CONFIG
+              value: |
+                max.poll.records=100

@@ -251,6 +251,10 @@ public class LagBasedPartitionAssignor extends AbstractAssignor implements Confi
         if (consumers.isEmpty()) {
             return;
         }
+
+        for (String cons: consumers) {
+            LOGGER.info("member id {} is equivalent to host id {} :", cons,  memberToName.get(cons));
+        }
         // Track total lag assigned to each consumer (for the current topic)
         final Map<String, Long> consumerTotalLags = new HashMap<>(consumers.size());
         for (String memberId : consumers) {

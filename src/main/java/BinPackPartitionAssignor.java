@@ -1,14 +1,24 @@
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import org.apache.kafka.clients.consumer.*;
+import org.apache.kafka.common.Cluster;
+import org.apache.kafka.common.Configurable;
+import org.apache.kafka.common.PartitionInfo;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.protocol.types.*;
+import org.apache.kafka.common.utils.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.stream.Collectors;
 
-public class BinPackPartitionAssignor /*extends AbstractAssignor*/ {
+public class BinPackPartitionAssignor extends AbstractAssignor {
     private static final Logger LOGGER = LoggerFactory.getLogger(BinPackPartitionAssignor.class);
     public BinPackPartitionAssignor() {
     }
-   /* static final String TOPIC_PARTITIONS_KEY_NAME = "previous_assignment";
+    static final String TOPIC_PARTITIONS_KEY_NAME = "previous_assignment";
     static final String TOPIC_KEY_NAME = "topic";
     static final String PARTITIONS_KEY_NAME = "partitions";
     static final String MAX_CONSUMPTION_RATE = "maxConsumptionRate";
@@ -22,7 +32,7 @@ public class BinPackPartitionAssignor /*extends AbstractAssignor*/ {
     static final Schema STICKY_ASSIGNOR_USER_DATA_V0 = new Schema(
             new Field(TOPIC_PARTITIONS_KEY_NAME, new ArrayOf(TOPIC_ASSIGNMENT)));
     private static final Schema STICKY_ASSIGNOR_USER_DATA_V1 = new Schema(
-            new Field(TOPIC_PARTITIONS_KEY_NAME, new ArrayOf(TOPIC_ASSIGNMENT)),
+           // new Field(TOPIC_PARTITIONS_KEY_NAME, new ArrayOf(TOPIC_ASSIGNMENT)),
             new Field(GENERATION_KEY_NAME, Type.INT32),
             new Field(MAX_CONSUMPTION_RATE, Type.FLOAT64),
             new Field(THE_Name, Type.STRING));
@@ -39,7 +49,7 @@ public class BinPackPartitionAssignor /*extends AbstractAssignor*/ {
     protected MemberData memberData(Subscription subscription) {
         ByteBuffer userData = subscription.userData();
         if (userData == null || !userData.hasRemaining()) {
-            return new MemberData(Collections.emptyList(),
+            return new MemberData(
                     0.0d, System.getenv("THENAME"), Optional.empty());
         }
         return deserializeTopicPartitionAssignment(userData);
@@ -56,10 +66,10 @@ public class BinPackPartitionAssignor /*extends AbstractAssignor*/ {
                 struct = STICKY_ASSIGNOR_USER_DATA_V0.read(copy);
             } catch (Exception e2) {
                 // ignore the consumer's previous assignment if it cannot be parsed
-                return new MemberData(Collections.emptyList(), 0.0d, "empty",  Optional.of(DEFAULT_GENERATION));
+                return new MemberData(0.0d, "empty",  Optional.of(DEFAULT_GENERATION));
             }
         }
-        List<TopicPartition> partitions = new ArrayList<>();
+      /*  List<TopicPartition> partitions = new ArrayList<>();
         // List<Double> rates = new ArrayList<>();
         for (Object structObj : struct.getArray(TOPIC_PARTITIONS_KEY_NAME)) {
             Struct assignment = (Struct) structObj;
@@ -69,28 +79,28 @@ public class BinPackPartitionAssignor /*extends AbstractAssignor*/ {
                 partitions.add(new TopicPartition(topic, partition));
             }
             LOGGER.info("Maximum rate is {}", struct.getDouble(MAX_CONSUMPTION_RATE));
-        }
+        }*/
         Optional<Integer> generation = struct.hasField(GENERATION_KEY_NAME) ?
                 Optional.of(struct.getInt(GENERATION_KEY_NAME)) : Optional.empty();
         Double maxRate = struct.hasField(MAX_CONSUMPTION_RATE) ? struct.getDouble(MAX_CONSUMPTION_RATE) : 0.0;
         String thename = struct.hasField(THE_Name) ? struct.getString(THE_Name) : "empty";
 
-        return new MemberData(partitions, maxRate, thename, generation);
+        return new MemberData( maxRate, thename, generation);
     }
 
 
     @Override
     public ByteBuffer subscriptionUserData(Set<String> topics) {
-        if (memberAssignment == null)
-            return null;
+ /*       if (memberAssignment == null)
+            return null;*/
         //memberAssignment=Collections.emptyList();
-        return serializeTopicPartitionAssignment(new MemberData(memberAssignment,
+        return serializeTopicPartitionAssignment(new MemberData(
                 ConsumerThread.maxConsumptionRatePerConsumer1, System.getenv("THENAME"), Optional.of(generation)));
     }
     // visible for testing
     static ByteBuffer serializeTopicPartitionAssignment(MemberData memberData) {
         Struct struct = new Struct(STICKY_ASSIGNOR_USER_DATA_V1);
-        List<Struct> topicAssignments = new ArrayList<>();
+    /*    List<Struct> topicAssignments = new ArrayList<>();
         for (Map.Entry<String, List<Integer>> topicEntry :
                 CollectionUtils.groupPartitionsByTopic(memberData.partitions).entrySet()) {
             Struct topicAssignment = new Struct(TOPIC_ASSIGNMENT);
@@ -98,7 +108,7 @@ public class BinPackPartitionAssignor /*extends AbstractAssignor*/ {
             topicAssignment.set(PARTITIONS_KEY_NAME, topicEntry.getValue().toArray());
             topicAssignments.add(topicAssignment);
         }
-        struct.set(TOPIC_PARTITIONS_KEY_NAME, topicAssignments.toArray());
+        struct.set(TOPIC_PARTITIONS_KEY_NAME, topicAssignments.toArray());*/
         if (memberData.generation.isPresent())
             struct.set(GENERATION_KEY_NAME, memberData.generation.get());
         struct.set(MAX_CONSUMPTION_RATE, memberData.maxConsumptionRate);
@@ -172,13 +182,32 @@ public class BinPackPartitionAssignor /*extends AbstractAssignor*/ {
             Map<String, List<String>> subscriptions
     ) {
         // each memmber/consumer to its propsective assignment
+
         final Map<String, List<TopicPartition>> assignment = new HashMap<>();
         for (String memberId : subscriptions.keySet()) {
+            LOGGER.info(" hey {}", memberId);
             assignment.put(memberId, new ArrayList<>());
+
+
+
         }
+
+        List<String> consumers = new ArrayList<>(subscriptions.keySet());
+
+
+
+
+
+
+        assignController(
+                assignment,
+                //topic
+
+                consumers);
+
         //for each topic assign call assigntopic to perform lag-aware assignment per topic
-        final Map<String, List<String>> consumersPerTopic = consumersPerTopic(subscriptions);
-        for (Map.Entry<String, List<String>> topicEntry : consumersPerTopic.entrySet()) {
+      /*  final Map<String, List<String>> consumersPerTopic = consumersPerTopic(subscriptions);
+       for (Map.Entry<String, List<String>> topicEntry : consumersPerTopic.entrySet()) {
             assignController(
                     assignment,
                     //topic
@@ -186,7 +215,7 @@ public class BinPackPartitionAssignor /*extends AbstractAssignor*/ {
                     //consumers
                     topicEntry.getValue(),
                     topicpartitions.get(topicEntry.getKey()));
-        }
+       }*/
         return assignment;
     }
 
@@ -198,34 +227,58 @@ public class BinPackPartitionAssignor /*extends AbstractAssignor*/ {
 
     private static void assignController(
             final Map<String, List<TopicPartition>> assignment,
-            final String topic,
-            final List<String> consumers,
+        /*    final String topic*/
+            final List<String> consumers
             //partition lags can be removed.
-            final List<TopicPartition> partitionLags) {
+            /*final List<TopicPartition> partitionLags*/) {
+
+
+        LOGGER.info("Inside  assignController");
+
+
         if (consumers.isEmpty()) {
+            LOGGER.info("looks like they are empty");
             return;
         }
 
         for(String c: consumers) {
             LOGGER.info("We have the following consumers  out of Kafka {}", c);
         }
+
+        for (String cons: consumers) {
+            LOGGER.info("member id {} is equivalent to host id {} :", cons,  memberToName.get(cons));
+        }
+
         List<Consumer> asscons = callForAssignment();
-        int controllerconsindex = 0;
         for (String co : consumers) {
-            LOGGER.info("consumer out of controller  {}", asscons.get(controllerconsindex).getId());
+
+           // LOGGER.info("");
+
+            Consumer controllerconsumer = null;
+            for(Consumer contcons : asscons) {
+                LOGGER.info(contcons.getId());
+                LOGGER.info(memberToName.get(co));
+
+
+                if (contcons.getId().equals(memberToName.get(co))) {
+                    controllerconsumer = contcons;
+                    break;
+                }
+            }
+
+            LOGGER.info("consumer out of controller  {}", controllerconsumer.getId());
             List<TopicPartition> listtp = new ArrayList<>();
             LOGGER.info("Assigning for kafka consumer {}", co);
-            for (Partition p : asscons.get(controllerconsindex).getAssignedPartitionsList()) {
-                TopicPartition tp = new TopicPartition(topic, p.getId());
+            for (Partition p : controllerconsumer.getAssignedPartitionsList()) {
+                TopicPartition tp = new TopicPartition("testtopic1", p.getId());
                 listtp.add(tp);
                 LOGGER.info("Added partition {} to  consumer {}", tp.partition(),
-                        asscons.get(controllerconsindex).getId());
+                        controllerconsumer.getId());
             }
             assignment.put(co, listtp);
             for (TopicPartition tp : listtp) {
                 LOGGER.info("Assigned partition {} to consumer {}", tp.partition(), co);
             }
-            controllerconsindex++;
         }
     }
 
@@ -293,7 +346,7 @@ public class BinPackPartitionAssignor /*extends AbstractAssignor*/ {
             }
         }
         return topicpartitions;
-    }*/
+    }
 
 }
 
