@@ -18,7 +18,7 @@ public class ConsumerThread implements Runnable {
     static float averageRatePerConsumerForGrpc = 0.0f;
 
     static long pollsSoFar = 0;
-   static Double maxConsumptionRatePerConsumer1 = 0.0d;
+    static Double maxConsumptionRatePerConsumer1 = 0.0d;
     //Long[] waitingTimes = new Long[10];
 
     @Override
@@ -30,7 +30,6 @@ public class ConsumerThread implements Runnable {
         //props.put(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG, CooperativeStickyAssignor.class.getName());
          //props.put(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG, StickyAssignor.class.getName());
         //props.put(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG, LagBasedPartitionAssignor.class.getName());
-
       /*  props.put(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG,
                 org.apache.kafka.clients.consumer.RangeAssignor.class.getName());*/
         boolean commit = !Boolean.parseBoolean(config.getEnableAutoCommit());
@@ -38,7 +37,7 @@ public class ConsumerThread implements Runnable {
         consumer.subscribe(Collections.singletonList(config.getTopic()));
         log.info("Subscribed to topic {}", config.getTopic());
 
-        Runtime.getRuntime().addShutdownHook(new Thread() {
+      /*  Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
                 log.info("Starting exit...");
                 consumer.wakeup();
@@ -48,7 +47,7 @@ public class ConsumerThread implements Runnable {
                     e.printStackTrace();
                 }
             }
-        });
+        });*/
 
         // int warmup = 0;
         try {
@@ -57,10 +56,9 @@ public class ConsumerThread implements Runnable {
                 ConsumerRecords<String, Customer> records = consumer.poll(Duration.ofMillis(Long.MAX_VALUE));
                 //ConsumerRecords<String, Customer> records = consumer.poll(Duration.ofMillis(0));
                 if (records.count() != 0) {
+                   // Long timeBeforePolling = System.currentTimeMillis();
                     for (ConsumerRecord<String, Customer> record : records) {
                         totalEvents++;
-                        log.info("System.currentTimeMillis() - record.timestamp() {}"
-                                , System.currentTimeMillis() - record.timestamp());
                         if (System.currentTimeMillis() - record.timestamp() <= 5000) {
                             eventsNonViolating++;
                         }else {
@@ -74,13 +72,7 @@ public class ConsumerThread implements Runnable {
                             e.printStackTrace();
                         }
                     }
-                    /* try {
-                            Thread.sleep(1000);
-                            log.info("Sleeping for {}", config.getSleep());
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }*/
-                    //getProcessingLatencyForEachEvent(records);
+
                     if (commit) {
                         consumer.commitSync();
                     }
@@ -107,7 +99,6 @@ public class ConsumerThread implements Runnable {
                     log.info("total events {}", totalEvents);
                     log.info("Number of events non violating {}", eventsNonViolating);
                     log.info(" Number of events violating {}", eventsViolating);
-
                 }
             }
         } catch (WakeupException e) {
@@ -115,7 +106,7 @@ public class ConsumerThread implements Runnable {
         } finally {
             consumer.close();
            log.info("You may want to print the events");
-            log.info("Closed consumer and we are done");
+           log.info("Closed consumer and we are done");
         }
     }
 }

@@ -127,7 +127,6 @@ public class BinPackPartitionAssignor extends AbstractAssignor {
             allSubscribedTopics.addAll(topics);
             topicSubscriptions.put(subscriptionEntry.getKey(), topics);
         }
-
         Map<String, List<TopicPartition>> rawAssignments =
                 assign( topicSubscriptions);
 
@@ -152,27 +151,19 @@ public class BinPackPartitionAssignor extends AbstractAssignor {
 
     //for each consumer returns the list of topic partitions assigned to it.
     static Map<String, List<TopicPartition>> assign(
-            Map<String, List<String>> subscriptions
-    ) {
+            Map<String, List<String>> subscriptions) {
         // each memmber/consumer to its propsective assignment
 
         final Map<String, List<TopicPartition>> assignment = new HashMap<>();
         for (String memberId : subscriptions.keySet()) {
             LOGGER.info(" hey {}", memberId);
             assignment.put(memberId, new ArrayList<>());
-
-
-
         }
-
         List<String> consumers = new ArrayList<>(subscriptions.keySet());
-
         assignController(
                 assignment,
                 //topic
                 consumers);
-
-
         return assignment;
     }
 
@@ -185,27 +176,20 @@ public class BinPackPartitionAssignor extends AbstractAssignor {
     private static void assignController(
             final Map<String, List<TopicPartition>> assignment,
         /*    final String topic*/
-            final List<String> consumers
-            ) {
-
-
+            final List<String> consumers) {
         LOGGER.info("Inside  assignController");
         if (consumers.isEmpty()) {
             LOGGER.info("looks like they are empty");
             return;
         }
-
         for(String c: consumers) {
             LOGGER.info("We have the following consumers  out of Kafka {}", c);
         }
-
         for (String cons: consumers) {
             LOGGER.info("member id {} is equivalent to host id {} :", cons,  memberToName.get(cons));
         }
-
         List<Consumer> asscons = callForAssignment();
         for (String co : consumers) {
-
             Consumer controllerconsumer = null;
             for(Consumer contcons : asscons) {
                 LOGGER.info(contcons.getId());
@@ -216,7 +200,6 @@ public class BinPackPartitionAssignor extends AbstractAssignor {
                     break;
                 }
             }
-
             LOGGER.info("consumer out of controller  {}", controllerconsumer.getId());
             List<TopicPartition> listtp = new ArrayList<>();
             LOGGER.info("Assigning for kafka consumer {}", co);
@@ -241,30 +224,21 @@ public class BinPackPartitionAssignor extends AbstractAssignor {
                 .build();
         AssignmentServiceGrpc.AssignmentServiceBlockingStub assignmentServiceBlockingStub = AssignmentServiceGrpc.newBlockingStub(managedChannel);
         AssignmentRequest request = AssignmentRequest.newBuilder().setRequest("Give me the Assignment plz").build();
-
         LOGGER.info("connected to server ");
         AssignmentResponse reply = assignmentServiceBlockingStub.getAssignment(request);
-
         LOGGER.info("We have the following consumers");
         for (Consumer c : reply.getConsumersList())
             LOGGER.info("consumer {}", c.getId());
-
         LOGGER.info("We have the following Assignment");
-
         for (Consumer c : reply.getConsumersList()) {
             LOGGER.info("Consumer {} has the following Assignment " , c.getId());
             for (Partition p : c.getAssignedPartitionsList()) {
                 LOGGER.info("partition {}" ,  p.getId());
-
             }
         }
         managedChannel.shutdownNow();
         return reply.getConsumersList();
     }
-
-
-
-
 }
 
 
