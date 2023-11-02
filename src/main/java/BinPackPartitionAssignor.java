@@ -170,9 +170,6 @@ public class BinPackPartitionAssignor extends AbstractAssignor {
 
 
 
-
-
-
     private static void assignController(
             final Map<String, List<TopicPartition>> assignment,
         /*    final String topic*/
@@ -194,7 +191,6 @@ public class BinPackPartitionAssignor extends AbstractAssignor {
             for(Consumer contcons : asscons) {
                 LOGGER.info(contcons.getId());
                 LOGGER.info(memberToName.get(co));
-
                 if (contcons.getId().equals(memberToName.get(co))) {
                     controllerconsumer = contcons;
                     break;
@@ -222,7 +218,8 @@ public class BinPackPartitionAssignor extends AbstractAssignor {
         ManagedChannel managedChannel = ManagedChannelBuilder.forAddress("assignmentservice", 5002)
                 .usePlaintext()
                 .build();
-        AssignmentServiceGrpc.AssignmentServiceBlockingStub assignmentServiceBlockingStub = AssignmentServiceGrpc.newBlockingStub(managedChannel);
+        AssignmentServiceGrpc.AssignmentServiceBlockingStub assignmentServiceBlockingStub = AssignmentServiceGrpc
+                .newBlockingStub(managedChannel);
         AssignmentRequest request = AssignmentRequest.newBuilder().setRequest("Give me the Assignment plz").build();
         LOGGER.info("connected to server ");
         AssignmentResponse reply = assignmentServiceBlockingStub.getAssignment(request);

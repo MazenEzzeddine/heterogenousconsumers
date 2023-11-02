@@ -60,6 +60,10 @@ public class KafkaConsumerConfig {
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, CustomerDeserializer.class.getName());
        // props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
         // "org.apache.kafka.common.serialization.StringDeserializer");
+        props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG,
+                "500");
+
+
         if (!config.getAdditionalConfig().isEmpty()) {
             StringTokenizer tok = new StringTokenizer(config.getAdditionalConfig(), ", \t\n\r");
             while (tok.hasMoreTokens()) {

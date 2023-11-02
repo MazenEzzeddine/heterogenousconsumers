@@ -37,7 +37,7 @@ public class ConsumerThread implements Runnable {
         consumer.subscribe(Collections.singletonList(config.getTopic()));
         log.info("Subscribed to topic {}", config.getTopic());
 
-      /*  Runtime.getRuntime().addShutdownHook(new Thread() {
+        Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
                 log.info("Starting exit...");
                 consumer.wakeup();
@@ -47,7 +47,7 @@ public class ConsumerThread implements Runnable {
                     e.printStackTrace();
                 }
             }
-        });*/
+        });
 
         // int warmup = 0;
         try {
@@ -59,12 +59,15 @@ public class ConsumerThread implements Runnable {
                    // Long timeBeforePolling = System.currentTimeMillis();
                     for (ConsumerRecord<String, Customer> record : records) {
                         totalEvents++;
-                        if (System.currentTimeMillis() - record.timestamp() <= 5000) {
+                        if (System.currentTimeMillis() - record.timestamp() <= 1000) {
                             eventsNonViolating++;
                         }else {
                             eventsViolating++;
                         }
                         //TODO sleep per record or per batch
+
+                        log.info(" latency is {}", System.currentTimeMillis() - record.timestamp());
+
                         try {
                             Thread.sleep(Long.parseLong(config.getSleep()));
                            // log.info("Sleeping for {}", config.getSleep());

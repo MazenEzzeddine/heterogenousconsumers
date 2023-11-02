@@ -289,7 +289,8 @@ public class LagBasedPartitionAssignor extends AbstractAssignor implements Confi
                         // If partition count is equal, lowest total lag first
                         final int compareTotalLags = Long.compare(c1.getValue(), c2.getValue());
                         if (compareTotalLags != 0) {
-                            return compareTotalLags;}
+                            return compareTotalLags;
+                        }
                         // If total lag is equal, lowest consumer id first
                         return c1.getKey().compareTo(c2.getKey());
                     }).getKey();
